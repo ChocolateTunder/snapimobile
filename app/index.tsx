@@ -3,7 +3,7 @@ import { Button, Text, View, TextInput } from "react-native";
 import CameraPage from "./camera";
 import { getToken } from "./api";
 
-export default function Index() {
+export default function App() {
     const [deviceID, onChangeDeviceID] = React.useState('');
 
     function submitCameraID(){
