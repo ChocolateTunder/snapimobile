@@ -26,17 +26,8 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": 
-    [
+    "plugins": [
       "expo-router",
-<<<<<<< Updated upstream
-      "expo-secure-store",[
-      "expo-camera",
-      {
-        "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-        "recordAudioAndroid": true
-      }]
-=======
       [
         "expo-camera",
         {
@@ -44,7 +35,6 @@
         }
       ],
       "expo-secure-store"
->>>>>>> Stashed changes
     ],
     "experiments": {
       "typedRoutes": true
