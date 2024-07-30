@@ -26,9 +26,25 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
+    "plugins": 
+    [
       "expo-router",
+<<<<<<< Updated upstream
+      "expo-secure-store",[
+      "expo-camera",
+      {
+        "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+        "recordAudioAndroid": true
+      }]
+=======
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow SNAPI Field Services App to access your camera"
+        }
+      ],
       "expo-secure-store"
+>>>>>>> Stashed changes
     ],
     "experiments": {
       "typedRoutes": true
