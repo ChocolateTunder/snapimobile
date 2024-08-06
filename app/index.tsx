@@ -5,6 +5,8 @@ import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login, refresh } from '../API/api';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from './context';
 //<MaterialIcons name="flashlight-on" size={24} color="black" />
 //<MaterialIcons name="flashlight-off" size={24} color="black" />
 //<MaterialIcons name="flash-on" size={24} color="black" />
@@ -71,13 +73,19 @@ async function getValueFor(key) {
   }
 }
 
+
 export default function Index() {
+  const navigation = useNavigation();
+  const { authTokens , setTokens } = useAuth();
+
   const [facing, setFacing] = useState<CameraType>('back');
   const [torch, setTorch] = useState(false);
   const [flash, setFlash] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [token, setToken] = useState(' ');
+  // const [accessToken, setAccessToken] = useState('');
+  // const [refreshToken, setRefreshToken] = useState(' ');
+
 
   useEffect(() => {
     // (async () => {
@@ -101,7 +109,21 @@ export default function Index() {
     // } else {
     //   refresh(token);
     // }
-    login();
+    async function getLoginDetails() {
+      try {
+          const loginDetails = await login();
+          setTokens({
+            accessToken: loginDetails.access_token,
+            refreshToken: loginDetails.refresh_token
+          });
+          //Access using authTokens.accessToken or authTokens.refreshToken
+          // navigation.navigate('Home')
+      } catch (error) {
+          console.error("Error fetching login details: ", error);
+      }
+    }
+
+    getLoginDetails()
   }, []);
   
 
