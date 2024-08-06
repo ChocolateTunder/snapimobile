@@ -19,7 +19,7 @@ export async function login() {
         //grant_type: "refresh_token",
     }, axiosConfig)
     .then(function(response){
-        console.log(response)
+        console.log("Logged in! ", response.data.refresh_token)
         return response.data.refresh_token;
     })
     .catch(function (error){

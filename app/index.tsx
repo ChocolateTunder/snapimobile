@@ -1,4 +1,4 @@
-import { Button, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from "react";
 import { Camera, CameraView, CameraType, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import * as SecureStore from 'expo-secure-store';
@@ -19,18 +19,55 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 //</View>
 const username = 'default';
 
+//async function save(key, value) {
+//  await SecureStore.setItemAsync(key, value);
+//}
 async function save(key, value) {
-  await SecureStore.setItemAsync(key, value);
+  try {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.setItem(key, value);
+    } else {
+      await SecureStore.setItemAsync(key, value.toString());
+    }
+  } catch (error) {
+    console.error("Error saving data:", error); 
+  }
 }
 
+// async function getValueFor(key) {
+//   const result = await SecureStore.getItemAsync(key);
+//   if (result) {
+//     console.log('Key found.');
+//     return result;
+//   } else {
+//     console.log('No values stored under that key.');
+//     return ' ';
+//   }
+// }
+
 async function getValueFor(key) {
-  let result = await SecureStore.getItemAsync(key);
-  if (result) {
-    console.log('Key found.');
-    return result;
-  } else {
-    console.log('No values stored under that key.');
-    return ' ';
+  try {
+    if (Platform.OS === 'web') {
+      const result = await AsyncStorage.getItem(key);
+      if (result) {
+        console.log('Key found.');
+        return result;
+      } else {
+        console.log('No values stored under that key.');
+        return ' ';
+      }
+    } else {
+      const result = await SecureStore.getItemAsync(key);
+      if (result) {
+        console.log('Key found.');
+        return result;
+      } else {
+        console.log('No values stored under that key.');
+        return ' ';
+      }
+    }
+  } catch (error) {
+    console.error("Error retrieving data:", error);
   }
 }
 
@@ -43,27 +80,28 @@ export default function Index() {
   const [token, setToken] = useState(' ');
 
   useEffect(() => {
-    (async () => {
-      const key = await getValueFor(username);
-      console.log("Key ", key)
-      setToken(key);
-    });
-
-    if (token == ' ') {
-      try {
-        (async () => {
-          const token = await login();
-        });
-        setToken(token);
-        save(username, token);
-        console.log("Logged in!");
-      } catch (error) {
-        console.log("Error logging in: ", error);
-      }   
-    } else {
-      refresh(token);
-    }
-     
+    // (async () => {
+    //   const key = await getValueFor(username);
+    //   console.log("Key ", key)
+    //   setToken(key);
+    // });
+    // const key = getValueFor(username);
+    // console.log("Key ", key)
+    // if (token == ' ') {
+    //   try {
+    //     (async () => {
+    //       const token = await login();
+    //     });
+    //     setToken(token);
+    //     save(username, token);
+    //     console.log("Logged in! ", token);
+    //   } catch (error) {
+    //     console.log("Error logging in: ", error);
+    //   }   
+    // } else {
+    //   refresh(token);
+    // }
+    login();
   }, []);
   
 
@@ -96,12 +134,12 @@ export default function Index() {
 
   function handleOnBarcodeScanned(result: BarcodeScanningResult){
     setScanned(true);
-    alert(`Bar code with data ${result} has been scanned!`);
+    alert(`Bar code with data ${result.data} has been scanned!`);
   } 
 
-    function resetScan(){
-      setScanned(false);
-    }
+  function resetScan(){
+    setScanned(false);
+  }
 
   return (
     <View style={styles.container}>
