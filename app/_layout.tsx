@@ -6,6 +6,7 @@ export default function RootLayout() {
   <AuthProvider>
       <Stack>
         <Stack.Screen name="index" options={{headerTitle: "Scan QR Code to begin", headerBackButtonMenuEnabled: false, headerTitleAlign: "center"}}/>
+        <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
       </Stack>
   </AuthProvider>
   );

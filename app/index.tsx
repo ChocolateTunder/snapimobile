@@ -7,6 +7,7 @@ import { login, refresh } from '../API/api';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from './context';
+import { router } from 'expo-router';
 //<MaterialIcons name="flashlight-on" size={24} color="black" />
 //<MaterialIcons name="flashlight-off" size={24} color="black" />
 //<MaterialIcons name="flash-on" size={24} color="black" />
@@ -77,14 +78,13 @@ async function getValueFor(key) {
 export default function Index() {
   const navigation = useNavigation();
   const { authTokens , setTokens } = useAuth();
-
   const [facing, setFacing] = useState<CameraType>('back');
   const [torch, setTorch] = useState(false);
   const [flash, setFlash] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  // const [accessToken, setAccessToken] = useState('');
-  // const [refreshToken, setRefreshToken] = useState(' ');
+  const [accessToken, setAccessToken] = useState('');
+  const [refreshToken, setRefreshToken] = useState(' ');
 
 
   useEffect(() => {
@@ -156,11 +156,14 @@ export default function Index() {
 
   function handleOnBarcodeScanned(result: BarcodeScanningResult){
     setScanned(true);
-    alert(`Bar code with data ${result.data} has been scanned!`);
+    //alert(`Bar code with data ${result.data} has been scanned!`);
+    //TODO: MOVE TO NEXT PAGE
+    //router.replace('/(setup)/login');
   } 
 
   function resetScan(){
     setScanned(false);
+    router.replace('/(tabs)');
   }
 
   return (
