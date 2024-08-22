@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context";
 import { MaterialIcons } from "@expo/vector-icons";
 
-export default function calibrate() {
+export default function calibrate({route}) {
     const [facing, setFacing] = useState<CameraType>('back');
     const [torch, setTorch] = useState(false);
     const [flash, setFlash] = useState(false);
     const [permission, requestPermission] = useCameraPermissions();
-    
+    const { qrCode } = route.params || {};
   
     if (!permission) {
       // Camera permissions are still loading.

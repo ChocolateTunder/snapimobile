@@ -154,12 +154,16 @@ export default function Index() {
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   }
 
-  function handleOnBarcodeScanned(result: BarcodeScanningResult){
+  const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
     //alert(`Bar code with data ${result.data} has been scanned!`);
     //TODO: MOVE TO NEXT PAGE
-    //router.replace('/(setup)/login');
-  } 
+    //navigation.navigate('(tabs)', {result});
+    router.push({
+      pathname: '/(tabs)/',
+      params: { data },
+    });
+  };
 
   function resetScan(){
     setScanned(false);
@@ -168,7 +172,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarcodeScanned={scanned ? undefined: handleOnBarcodeScanned}>
+      <BarCodeScanner style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}>
         <View style={styles.buttonContainer}>
           <Pressable style={styles.button} onPress={toggleTorch}>
             {torch ? <MaterialIcons name="flashlight-on" size={24} color="black" /> : <MaterialIcons name="flashlight-off" size={24} color="black" />}
@@ -178,11 +182,7 @@ export default function Index() {
           </Pressable>
         </View>
       </CameraView>
-      <View style={styles.buttonContainer}>
-        <Pressable style={styles.button} onPress={resetScan}>
-          <Text>Scan Again</Text>
-        </Pressable>
-      </View>
+      {scanned && <View style={styles.buttonContainer}><Pressable style={styles.button} onPress={resetScan}><Text>Scan Again</Text></Pressable></View> }
     </View>
   );
 }

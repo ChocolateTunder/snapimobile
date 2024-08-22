@@ -20,6 +20,14 @@ export default function TabLayout() {
           headerTitleAlign: "center"
         }}
       />
+      <Tabs.Screen
+        name="photo2"
+        options={{
+          title: 'Take a picture of installed device',
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="cog" color={color} />,
+          headerTitleAlign: "center"
+        }}
+      />
     </Tabs>
   );
 }
