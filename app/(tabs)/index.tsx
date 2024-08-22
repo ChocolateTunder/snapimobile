@@ -2,15 +2,15 @@ import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { useNavigation } from "expo-router";
 import { Button, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from "react";
-import { useAuth } from "../context";
+import { useAppContext } from "../context";
 import { MaterialIcons } from "@expo/vector-icons";
 
-export default function calibrate({route}) {
+export default function calibrate() {
     const [facing, setFacing] = useState<CameraType>('back');
     const [torch, setTorch] = useState(false);
     const [flash, setFlash] = useState(false);
     const [permission, requestPermission] = useCameraPermissions();
-    const { qrCode } = route.params || {};
+    const { authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode } = useAppContext();
   
     if (!permission) {
       // Camera permissions are still loading.
