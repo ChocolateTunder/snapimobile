@@ -1,10 +1,13 @@
-import { Button, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useEffect, useState } from "react";
+import { Button, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useContext, useEffect, useState } from "react";
 import { Camera, CameraView, CameraType, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login, refresh } from '../API/api';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
+import { useAppContext } from './context';
+import { router } from 'expo-router';
 //<MaterialIcons name="flashlight-on" size={24} color="black" />
 //<MaterialIcons name="flashlight-off" size={24} color="black" />
 //<MaterialIcons name="flash-on" size={24} color="black" />
@@ -17,53 +20,112 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 //            <View style={styles.shutterButton}>
 //<MaterialIcons name="camera" size={75} color="black" />              
 //</View>
-const username = 'default';
 
+//async function save(key, value) {
+//  await SecureStore.setItemAsync(key, value);
+//}
 async function save(key, value) {
-  await SecureStore.setItemAsync(key, value);
-}
-
-async function getValueFor(key) {
-  let result = await SecureStore.getItemAsync(key);
-  if (result) {
-    console.log('Key found.');
-    return result;
-  } else {
-    console.log('No values stored under that key.');
-    return ' ';
+  try {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.setItem(key, value);
+    } else {
+      await SecureStore.setItemAsync(key, value.toString());
+    }
+  } catch (error) {
+    console.error("Error saving data:", error); 
   }
 }
 
+// async function getValueFor(key) {
+//   const result = await SecureStore.getItemAsync(key);
+//   if (result) {
+//     console.log('Key found.');
+//     return result;
+//   } else {
+//     console.log('No values stored under that key.');
+//     return ' ';
+//   }
+// }
+
+async function getValueFor(key) {
+  try {
+    if (Platform.OS === 'web') {
+      const result = await AsyncStorage.getItem(key);
+      if (result) {
+        console.log('Key found.');
+        return result;
+      } else {
+        console.log('No values stored under that key.');
+        return ' ';
+      }
+    } else {
+      const result = await SecureStore.getItemAsync(key);
+      if (result) {
+        console.log('Key found.');
+        return result;
+      } else {
+        console.log('No values stored under that key.');
+        return ' ';
+      }
+    }
+  } catch (error) {
+    console.error("Error retrieving data:", error);
+  }
+}
+
+
 export default function Index() {
+  const navigation = useNavigation();
   const [facing, setFacing] = useState<CameraType>('back');
   const [torch, setTorch] = useState(false);
   const [flash, setFlash] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [token, setToken] = useState(' ');
+  const { authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode } = useAppContext();
+  // const [accessToken, setAccessToken] = useContext(AppContext);
+  // const [refreshToken, setRefreshToken] = useContext(AppContext);
+
 
   useEffect(() => {
-    (async () => {
-      const key = await getValueFor(username);
-      console.log("Key ", key)
-      setToken(key);
-    });
-
-    if (token == ' ') {
+    // (async () => {
+    //   const key = await getValueFor(username);
+    //   console.log("Key ", key)
+    //   setToken(key);
+    // });
+    // const key = getValueFor(username);
+    // console.log("Key ", key)
+    // if (token == ' ') {
+    //   try {
+    //     (async () => {
+    //       const token = await login();
+    //     });
+    //     setToken(token);
+    //     save(username, token);
+    //     console.log("Logged in! ", token);
+    //   } catch (error) {
+    //     console.log("Error logging in: ", error);
+    //   }   
+    // } else {
+    //   refresh(token);
+    // }
+    async function getLoginDetails() {
       try {
-        (async () => {
-          const token = await login();
-        });
-        setToken(token);
-        save(username, token);
-        console.log("Logged in!");
+          const loginDetails = await login();
+          setAuthToken(loginDetails.access_token);
+          setRefreshToken(loginDetails.refresh_token);
+          
+          // setTokens({
+          //   accessToken: loginDetails.access_token,
+          //   refreshToken: loginDetails.refresh_token
+          // });
+          //Access using authTokens.accessToken or authTokens.refreshToken
+          // navigation.navigate('Home')
       } catch (error) {
-        console.log("Error logging in: ", error);
-      }   
-    } else {
-      refresh(token);
+          console.error("Error fetching login details: ", error);
+      }
     }
-     
+
+    getLoginDetails()
   }, []);
   
 
@@ -94,18 +156,23 @@ export default function Index() {
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   }
 
-  function handleOnBarcodeScanned(result: BarcodeScanningResult){
+  const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
-    alert(`Bar code with data ${result} has been scanned!`);
-  } 
+    //alert(`Bar code with data ${result.data} has been scanned!`);
+    //TODO: MOVE TO NEXT PAGE
+    //navigation.navigate('(tabs)', {result});
+    setQRCode(data);
+    router.push({pathname: '/(tabs)/' });
+  };
 
-    function resetScan(){
-      setScanned(false);
-    }
+  function resetScan(){
+    setScanned(false);
+    router.replace('/(tabs)');
+  }
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarcodeScanned={scanned ? undefined: handleOnBarcodeScanned}>
+      <CameraView style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}>
         <View style={styles.buttonContainer}>
           <Pressable style={styles.button} onPress={toggleTorch}>
             {torch ? <MaterialIcons name="flashlight-on" size={24} color="black" /> : <MaterialIcons name="flashlight-off" size={24} color="black" />}
@@ -115,11 +182,7 @@ export default function Index() {
           </Pressable>
         </View>
       </CameraView>
-      <View style={styles.buttonContainer}>
-        <Pressable style={styles.button} onPress={resetScan}>
-          <Text>Scan Again</Text>
-        </Pressable>
-      </View>
+      {scanned && <View style={styles.buttonContainer}><Pressable style={styles.button} onPress={resetScan}><Text>Scan Again</Text></Pressable></View> }
     </View>
   );
 }
