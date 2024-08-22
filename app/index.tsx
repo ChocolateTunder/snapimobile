@@ -1,12 +1,12 @@
 import { Button, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Camera, CameraView, CameraType, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login, refresh } from '../API/api';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from './context';
+import { useAppContext } from './context';
 import { router } from 'expo-router';
 //<MaterialIcons name="flashlight-on" size={24} color="black" />
 //<MaterialIcons name="flashlight-off" size={24} color="black" />
@@ -20,7 +20,6 @@ import { router } from 'expo-router';
 //            <View style={styles.shutterButton}>
 //<MaterialIcons name="camera" size={75} color="black" />              
 //</View>
-const username = 'default';
 
 //async function save(key, value) {
 //  await SecureStore.setItemAsync(key, value);
@@ -77,14 +76,14 @@ async function getValueFor(key) {
 
 export default function Index() {
   const navigation = useNavigation();
-  const { authTokens , setTokens } = useAuth();
   const [facing, setFacing] = useState<CameraType>('back');
   const [torch, setTorch] = useState(false);
   const [flash, setFlash] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [accessToken, setAccessToken] = useState('');
-  const [refreshToken, setRefreshToken] = useState(' ');
+  const { authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode } = useAppContext();
+  // const [accessToken, setAccessToken] = useContext(AppContext);
+  // const [refreshToken, setRefreshToken] = useContext(AppContext);
 
 
   useEffect(() => {
@@ -112,10 +111,13 @@ export default function Index() {
     async function getLoginDetails() {
       try {
           const loginDetails = await login();
-          setTokens({
-            accessToken: loginDetails.access_token,
-            refreshToken: loginDetails.refresh_token
-          });
+          setAuthToken(loginDetails.access_token);
+          setRefreshToken(loginDetails.refresh_token);
+          
+          // setTokens({
+          //   accessToken: loginDetails.access_token,
+          //   refreshToken: loginDetails.refresh_token
+          // });
           //Access using authTokens.accessToken or authTokens.refreshToken
           // navigation.navigate('Home')
       } catch (error) {
@@ -159,10 +161,8 @@ export default function Index() {
     //alert(`Bar code with data ${result.data} has been scanned!`);
     //TODO: MOVE TO NEXT PAGE
     //navigation.navigate('(tabs)', {result});
-    router.push({
-      pathname: '/(tabs)/',
-      params: { data },
-    });
+    setQRCode(data);
+    router.push({pathname: '/(tabs)/' });
   };
 
   function resetScan(){
@@ -172,7 +172,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <BarCodeScanner style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}>
+      <CameraView style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}>
         <View style={styles.buttonContainer}>
           <Pressable style={styles.button} onPress={toggleTorch}>
             {torch ? <MaterialIcons name="flashlight-on" size={24} color="black" /> : <MaterialIcons name="flashlight-off" size={24} color="black" />}

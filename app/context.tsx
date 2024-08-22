@@ -1,23 +1,25 @@
 import React, { createContext, useState, useContext } from 'react';
 
 // Define the shape of the context's value
-const AuthContext = createContext({
-    authTokens: null,
-    setTokens: (data) => {}
+const AppContext = createContext({
+    authToken: null,
+    setAuthToken: (data) => {},
+    refreshToken: null,
+    setRefreshToken: (data) => {},
+    qrCode: null,
+    setQRCode: (data) => {},
 });
 
-export const AuthProvider = ({ children }) => {
-    const [authTokens, setAuthTokens] = useState(null);
-
-    const setTokens = (data) => {
-        setAuthTokens(data);
-    };
+export const ContextProvider = ({ children }) => {
+    const [authToken, setAuthToken] = useState(null);
+    const [refreshToken, setRefreshToken] = useState(null);
+    const [qrCode, setQRCode] = useState(null);
 
     return (
-        <AuthContext.Provider value={{ authTokens, setTokens }}>
+        <AppContext.Provider value={{ authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode }}>
             {children}
-        </AuthContext.Provider>
+        </AppContext.Provider>
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAppContext = () => useContext(AppContext);
