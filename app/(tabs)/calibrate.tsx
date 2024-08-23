@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, Image, Button } from "react-native";
-import { useAuth } from '../context';
+import { useAppContext } from '../context';
+import { deviceDetails, getPicture } from "@/API/api";
 import { red } from "react-native-reanimated/lib/typescript/reanimated2/Colors";
 
 export default function calibrate() {
@@ -11,11 +12,35 @@ export default function calibrate() {
     const [result, onResultChange] = useState(0);
     const [imgPath, updateImagePath] = useState('');
     const [imgLoaded, onImgLoad] = useState(false);
-
+    const { authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode } = useAppContext();
+    
     function loadImage(){
 
     }
+  
+  useEffect(() =>{
+    async function getProductKey(){
+      try {
+        const details = await deviceDetails(authToken, qrCode);
+        return details.productKey;
+      } catch (error) {
+        throw error;
+      }
+    }
 
+    async function getDeviceConfigImage() {
+      try {
+        const product = await getProductKey();
+        const imgList = await getPicture(authToken, qrCode, product);
+        console.log(imgList);
+      } catch(error){
+        console.log("Error in getting device image")
+      }
+    }
+    
+    getDeviceConfigImage;
+    
+  }, [])
   // URL of the image to show after button press
   const imageUrl = 'https://example.com/your-image.jpg';
 
