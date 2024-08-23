@@ -58,7 +58,78 @@ export function refresh(token:string){
         console.log(response)
         return response.data.access_token;
     })
-    .catch(function (error){
+    .catch(function(error){
         console.error("Error in verifying token: ", error);
     });
 }
+
+export async function deviceDetails(token:string, device:number){
+    const URL = API_URL + '/manage/v2/device/deviceName';
+
+    try {
+        const response = await axios.post(URL, {
+            deviceName: device,
+            access_token: token
+        }, axiosConfig)
+
+        return response.data;
+    } catch(error) {
+        console.error("Error in getting device details: ", error);
+        throw error;
+    }
+}
+
+
+export async function getPicture(token:string, device:number, product:string){
+    const IMAGE_URL = API_URL + '/manage/picture/lastedPicture';
+    try {
+        const response = await axios.post(IMAGE_URL, {
+            currentPage: 1,
+            pageSize: 1,
+            deviceName: device,
+            picMode: 1,
+            productKey: product,
+            access_token: token
+        }, axiosConfig)
+        return response.data.list;
+    } catch(error){
+        console.error("Error in getting device picture: ", error);
+        throw error;
+    }
+}
+
+// export function getPicture(token:string, device:number, product:string){
+//     const IMAGE_URL = API_URL + '/manage/picture/lastedPicture';
+
+//     axios.post(IMAGE_URL, {
+//         currentPage: 1,
+//         pageSize: 1,
+//         deviceName: device,
+//         picMode: 1,
+//         productKey: product,
+//         access_token: token
+//     }, axiosConfig)
+//     .then(function(response){
+//         console.log(response)
+//         return response.data.list
+//     })
+//     .catch(function(error){
+//         console.error("Error in getting device picture: ", error);
+//     })
+// }
+
+// export function deviceDetails(token:string, device:number){
+//     const URL = API_URL + '/manage/v2/device/deviceName';
+
+//     axios.post(URL, {
+//         deviceName: device,
+//         access_token: token
+//     }, axiosConfig)
+//     .then(function(response){
+//         console.log(response)
+//         return response.data
+//     })
+//     .catch(function(error){
+//         console.error("Error in getting device details: ", error);
+//     })
+// }

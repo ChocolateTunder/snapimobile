@@ -165,6 +165,11 @@ export default function Index() {
     router.push({pathname: '/(tabs)/' });
   };
 
+  function testSkip(){
+    setQRCode(866207059655070);
+    router.push({pathname: '/(tabs)/' });
+  }
+
   function resetScan(){
     setScanned(false);
     router.replace('/(tabs)');
@@ -172,7 +177,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}>
+      <CameraView style={styles.camera} facing={facing} enableTorch={torch} barcodeScannerSettings={{barcodeTypes: ["qr"]}} onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}>
         <View style={styles.buttonContainer}>
           <Pressable style={styles.button} onPress={toggleTorch}>
             {torch ? <MaterialIcons name="flashlight-on" size={24} color="black" /> : <MaterialIcons name="flashlight-off" size={24} color="black" />}
@@ -183,6 +188,7 @@ export default function Index() {
         </View>
       </CameraView>
       {scanned && <View style={styles.buttonContainer}><Pressable style={styles.button} onPress={resetScan}><Text>Scan Again</Text></Pressable></View> }
+      <View style={styles.buttonContainer}><Pressable style={styles.button} onPress={testSkip}><Text>Go to Calibration</Text></Pressable></View>
     </View>
   );
 }
