@@ -39,6 +39,23 @@ export default function Calibrate() {
     }
   }
 
+  function loadImage() {
+    onImgLoad(true);
+    const url = "http://20.53.98.203" + imgPath;
+    setImgUrl(url);
+    
+    // Image.getSize(url, (width, height) => {
+    //   setDimensions({ width, height });
+    // }, (error) => {
+    //   console.error('Error fetching image dimensions:', error);
+    // });
+
+    // translateX.value = imgDimensions.width / 2;
+    // translateY.value = imgDimensions.height / 2;
+    console.log("IMAGE URL: ", url);
+
+  }
+
   function convertToBase64(url: string) {
     fetch(url)
       .then(response => response.blob())
@@ -63,23 +80,6 @@ export default function Calibrate() {
     } catch (error) {
       console.log("Error in creating cutout");
     }
-  }
-
-  function loadImage() {
-    onImgLoad(true);
-    const url = "http://20.53.98.203" + imgPath;
-    setImgUrl(url);
-    
-    // Image.getSize(url, (width, height) => {
-    //   setDimensions({ width, height });
-    // }, (error) => {
-    //   console.error('Error fetching image dimensions:', error);
-    // });
-
-    // translateX.value = imgDimensions.width / 2;
-    // translateY.value = imgDimensions.height / 2;
-    console.log("IMAGE URL: ", url);
-
   }
 
   function identify() {
@@ -150,26 +150,27 @@ export default function Calibrate() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.container}>
+    
         {imgLoaded ? (
-          <View>
-            <Image
-                source={{ uri: imgUrl }}
-                style={styles.image}
-            />
-            <GestureHandlerRootView style={styles.container}>
+          <>
+              <GestureHandlerRootView style={styles.gestureHandler}>
               <GestureDetector gesture={composed}>
                 {/* <Animated.View style={[styles.boxWrapper, animatedStyles]}>
                   <Animated.View style={styles.box} />
                 </Animated.View> */}
-                <Animated.View style={[animatedStyles, styles.box]}/>
+                <View style={styles.container}>
+                  <Image
+                  source={{ uri: imgUrl }}
+                  style={styles.image}
+                  />
+                  <Animated.View style={[animatedStyles, styles.box]}/>
+                </View>
               </GestureDetector>
-            </GestureHandlerRootView>
-          </View>
+              </GestureHandlerRootView>
+          </>
         ) : (
           <Text style={styles.placeholder}>Press the button to get the latest image from SNAPI device</Text>
         )}
-      </View>
       {imgLoaded ? (
         <View>
           <Text>Angle: </Text>
@@ -184,6 +185,7 @@ export default function Calibrate() {
       ) : (
         <Button title="Load Config" onPress={loadImage} />
       )}
+     
     </SafeAreaView>
   );
 }
@@ -191,8 +193,8 @@ export default function Calibrate() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center'
   },
   placeholder: {
     fontSize: 18,
@@ -202,25 +204,20 @@ const styles = StyleSheet.create({
   image: {
     flex: 1,
     resizeMode: 'contain',
+    marginBottom: 20,
     width: '100%',
     height: '100%',
-    marginBottom: 20,
+    zIndex: -1
   },
-  boxContainer: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
+  gestureHandler: {
+    flex: 1,
+    width: '100%'
   },
   box: {
-    position: 'absolute',
     width: 100,
     height: 50,
     borderColor: 'yellow',
-    borderWidth: 3
-  },
-  boxWrapper: {
-    // Increase the hit area of the bounding box
-    padding: 20, // Increase this to extend the tappable area
-    margin: -20, // Match padding to keep the box centered
+    borderWidth: 3,
+    zIndex: 1,
   },
 });
