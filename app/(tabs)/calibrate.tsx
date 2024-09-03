@@ -1,82 +1,223 @@
-import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TextInput, Pressable, Image, Button } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TextInput, Image, Button, SafeAreaView } from "react-native";
+import Svg, { Rect } from 'react-native-svg';
 import { useAppContext } from '../context';
-import { deviceDetails, getPicture } from "@/API/api";
-import { red } from "react-native-reanimated/lib/typescript/reanimated2/Colors";
+import { deviceDetails, getPicture, uploadCutoutPic } from "@/API/api";
+import Animated, { useAnimatedStyle, useSharedValue, withClamp, withSpring } from "react-native-reanimated";
+import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler, PinchGestureHandler, RotationGestureHandler } from "react-native-gesture-handler";
 
-export default function calibrate() {
-    const [decimals, onChangeDecimals] = useState('');
-    const [digits, onChangeDigits] = useState('');
-    const [meterID, onChangeMeterID] = useState(1800);
-    const [angle, onAngleChange] = useState(0);
-    const [result, onResultChange] = useState(0);
-    const [imgPath, updateImagePath] = useState('');
-    const [imgLoaded, onImgLoad] = useState(false);
-    const { authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode } = useAppContext();
-    
-    function loadImage(){
+export default function Calibrate() {
+  const [decimals, onChangeDecimals] = useState('');
+  const [digits, onChangeDigits] = useState('');
+  const [meterID, onChangeMeterID] = useState(1800);
+  const [angle, onAngleChange] = useState('');
+  const [result, onResultChange] = useState(0);
+  const [imgPath, updateImagePath] = useState('');
+  const [tempImgPath, updateTempImgPath] = useState('');
+  const [imgUrl, setImgUrl] = useState('');
+  const [imgLoaded, onImgLoad] = useState(false);
+  const { authToken, qrCode } = useAppContext();
+  const [imgDimensions, setDimensions] = useState({width: 0, height: 0}); 
 
+  async function getProductKey() {
+    try {
+      const details = await deviceDetails(authToken, qrCode);
+      return details.productKey;
+    } catch (error) {
+      throw error;
     }
-  
-  useEffect(() =>{
-    async function getProductKey(){
-      try {
-        const details = await deviceDetails(authToken, qrCode);
-        return details.productKey;
-      } catch (error) {
-        throw error;
-      }
-    }
+  }
 
-    async function getDeviceConfigImage() {
-      try {
-        const product = await getProductKey();
-        const imgList = await getPicture(authToken, qrCode, product);
-        console.log(imgList);
-      } catch(error){
-        console.log("Error in getting device image")
-      }
+  async function getDeviceConfigImage() {
+    try {
+      const product = await getProductKey();
+      console.log("Product key: ", product);
+      const path = await getPicture(authToken, qrCode, product);
+      updateImagePath(path);
+    } catch (error) {
+      console.log("Error in getting device image");
     }
+  }
+
+  function loadImage() {
+    onImgLoad(true);
+    const url = "http://20.53.98.203" + imgPath;
+    setImgUrl(url);
     
-    getDeviceConfigImage;
-    
-  }, [])
-  // URL of the image to show after button press
-  const imageUrl = 'https://example.com/your-image.jpg';
+    // Image.getSize(url, (width, height) => {
+    //   setDimensions({ width, height });
+    // }, (error) => {
+    //   console.error('Error fetching image dimensions:', error);
+    // });
+
+    // translateX.value = imgDimensions.width / 2;
+    // translateY.value = imgDimensions.height / 2;
+    console.log("IMAGE URL: ", url);
+
+  }
+
+  function convertToBase64(url: string) {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(blob);
+        return new Promise((resolve) => {
+          fileReader.onloadend = () => {
+            resolve(fileReader.result?.toString());
+          };
+        });
+      });
+    return 'Calibration Error';
+  }
+
+  async function createCutout(imagePath: string, token: string) {
+    try {
+      const img64: string = convertToBase64(imagePath);
+      const path = await uploadCutoutPic(img64, token);
+      updateTempImgPath(path);
+      console.log("Temp img path: ", tempImgPath);
+    } catch (error) {
+      console.log("Error in creating cutout");
+    }
+  }
+
+  function identify() {
+    createCutout(imgPath, authToken);
+  }
+
+  useEffect(() => {
+    getDeviceConfigImage();
+  });
+
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const prevX = useSharedValue(0);
+  const prevY = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const newScale = useSharedValue(0);
+  const currentangle = useSharedValue(0);
+  const newAngle = useSharedValue(0);
+
+  const pan = Gesture.Pan().minDistance(1)
+    .onStart(() => {
+      prevX.value = translateX.value;
+      prevY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      translateX.value = prevX.value + event.translationX;
+      translateY.value = prevY.value + event.translationY;
+      // const boundX = Math.min(
+      //   Math.max(prevX.value + event.translationX, 0),
+      //   imgDimensions.width - prevX.value * scale.value
+      // );
+
+      // const boundY = Math.min(
+      //   Math.max(prevY.value + event.translationY, 0),
+      //   imgDimensions.height - prevY.value * scale.value
+      // );
+
+      // translateX.value = boundX;
+      // translateY.value = boundY;
+  }).runOnJS(true);
+
+  const pinch = Gesture.Pinch()
+    .onStart(() => {
+      newScale.value = scale.value;
+    })
+    .onUpdate((event) => {
+      scale.value = newScale.value * event.scale;
+  }).runOnJS(true);
+
+  const rotation = Gesture.Rotation()
+    .onStart(() => {
+      newAngle.value = currentangle.value;
+    }).onUpdate((event) => {
+      currentangle.value = newAngle.value + event.rotation;
+  });
+
+  const animatedStyles = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${currentangle.value}rad` },
+      { scale: scale.value }
+    ],
+  }));
+
+  const composed = Gesture.Simultaneous(pan, pinch, rotation);
+
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+    
+        {imgLoaded ? (
+          <>
+              <GestureHandlerRootView style={styles.gestureHandler}>
+              <GestureDetector gesture={composed}>
+                {/* <Animated.View style={[styles.boxWrapper, animatedStyles]}>
+                  <Animated.View style={styles.box} />
+                </Animated.View> */}
+                <View style={styles.container}>
+                  <Image
+                  source={{ uri: imgUrl }}
+                  style={styles.image}
+                  />
+                  <Animated.View style={[animatedStyles, styles.box]}/>
+                </View>
+              </GestureDetector>
+              </GestureHandlerRootView>
+          </>
+        ) : (
+          <Text style={styles.placeholder}>Press the button to get the latest image from SNAPI device</Text>
+        )}
       {imgLoaded ? (
-        <Image
-          source={{ uri: imageUrl }}
-          style={styles.image}
-          resizeMode="contain"
-        />
+        <View>
+          <Text>Angle: </Text>
+          <TextInput keyboardType="numeric" value={angle} onChangeText={newAngle => onAngleChange(newAngle)} />
+          <Text>Number of digits: </Text>
+          <TextInput keyboardType="numeric" value={digits} onChangeText={newDigits => onChangeDigits(newDigits)} />
+          <Text>Number of decimal places: </Text>
+          <TextInput keyboardType="numeric" value={decimals} onChangeText={newDecimal => onChangeDecimals(newDecimal)} />
+          <Text>Recognition result: {result}</Text>
+          <Button title="Identify" onPress={identify} />
+        </View>
       ) : (
-        <Text style={styles.placeholder}>Press the button to load the image</Text>
+        <Button title="Load Config" onPress={loadImage} />
       )}
-
-      <Button
-        title="Press me"
-        onPress={() => onImgLoad(true)}
-      />
-    </View>
+     
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center'
   },
   placeholder: {
     fontSize: 18,
     marginBottom: 20,
+    textAlign: 'center',
   },
   image: {
-    width: 200,
-    height: 200,
+    flex: 1,
+    resizeMode: 'contain',
     marginBottom: 20,
+    width: '100%',
+    height: '100%',
+    zIndex: -1
+  },
+  gestureHandler: {
+    flex: 1,
+    width: '100%'
+  },
+  box: {
+    width: 100,
+    height: 50,
+    borderColor: 'yellow',
+    borderWidth: 3,
+    zIndex: 1,
   },
 });
