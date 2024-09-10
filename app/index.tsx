@@ -197,10 +197,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    backgroundColor: '#2C3E50', // Sleek dark background
   },
   message: {
     textAlign: 'center',
     paddingBottom: 10,
+    fontSize: 18,
+    color: '#ecf0f1', // Light text color for contrast
   },
   camera: {
     flex: 1,
@@ -209,27 +212,53 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: 'rgba(84, 90, 96, 0.7)',
+    backgroundColor: 'rgba(44, 62, 80, 0.8)', // Semi-transparent dark color
     marginTop: 15,   
-    maxHeight: 30,
-    maxWidth: 300,
-    borderRadius: 10,
+    maxHeight: 50, // Slightly larger for better interaction
+    maxWidth: 350,
+    borderRadius: 20, // More rounded for a smooth look
+    shadowColor: '#000', // Add shadow for depth
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 5,
+    elevation: 3, // Shadow on Android
   },
   shutterButton: {
     alignSelf: "center",
-    bottom: 35,
+    bottom: 40,
     position: "absolute",
-    backgroundColor: 'rgba(84, 90, 96, 0.7)',
-    borderRadius: 40,
+    backgroundColor: 'linear-gradient(135deg, #16a085, #f4d03f)', // Gradient for cool effect
+    borderRadius: 50,
+    width: 70,
+    height: 70, // Larger button with circular shape
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#16a085', // Matching shadow for gradient
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 5, // Enhanced shadow on Android
   },
   button: {
     flex: 1,
     alignSelf: 'flex-end',
     alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: '#2980b9', // Vibrant button color
+    marginHorizontal: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
+    elevation: 3,
   },
   text: {
-    fontSize: 24,
+    fontSize: 26, // Slightly larger for emphasis
     fontWeight: 'bold',
-    color: 'white',
+    color: '#ecf0f1', // Light text color
+    textShadowColor: 'rgba(0, 0, 0, 0.75)', // Text shadow for a fancy effect
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
   },
 });
