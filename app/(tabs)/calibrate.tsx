@@ -173,13 +173,13 @@ export default function Calibrate() {
         )}
       {imgLoaded ? (
         <View>
-          <Text>Angle: </Text>
+          <Text style={styles.label}>Angle: </Text>
           <TextInput keyboardType="numeric" value={angle} onChangeText={newAngle => onAngleChange(newAngle)} />
-          <Text>Number of digits: </Text>
+          <Text style={styles.label}>Number of digits: </Text>
           <TextInput keyboardType="numeric" value={digits} onChangeText={newDigits => onChangeDigits(newDigits)} />
-          <Text>Number of decimal places: </Text>
+          <Text style={styles.label}>Number of decimal places: </Text>
           <TextInput keyboardType="numeric" value={decimals} onChangeText={newDecimal => onChangeDecimals(newDecimal)} />
-          <Text>Recognition result: {result}</Text>
+          <Text style={styles.label}>Recognition result: {result}</Text>
           <Button title="Identify" onPress={identify} />
         </View>
       ) : (
@@ -194,30 +194,94 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    backgroundColor: '#1A1A2E', // Sleek dark background for a modern look
+    paddingHorizontal: 20, // Adding padding for better layout on all devices
   },
   placeholder: {
-    fontSize: 18,
+    fontSize: 20, // Emphasized text for better readability
     marginBottom: 20,
     textAlign: 'center',
+    color: '#ecf0f1', // Light color for strong contrast
+    fontStyle: 'italic', // Adding a stylish, unique flair
+    textShadowColor: 'rgba(0, 0, 0, 0.5)', // Subtle shadow for depth
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   image: {
     flex: 1,
-    resizeMode: 'contain',
+    resizeMode: 'contain', // Ensures image fits within the view
     marginBottom: 20,
     width: '100%',
     height: '100%',
-    zIndex: -1
+    borderRadius: 10, // Rounded corners for a more modern look
+    shadowColor: '#000', // Shadow for depth and visual separation
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4, // Adding elevation for Android devices
+    backgroundColor: 'rgba(255, 255, 255, 0.05)', // Light background to separate image
   },
   gestureHandler: {
     flex: 1,
-    width: '100%'
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Light transparent overlay
+    borderRadius: 15, // Rounded corners for smooth interaction
+    padding: 10, // Padding to avoid edges touching
+    marginVertical: 10, // Vertical margins for spacing between elements
   },
   box: {
-    width: 100,
-    height: 50,
-    borderColor: 'yellow',
-    borderWidth: 3,
-    zIndex: 1,
+    width: 120,
+    height: 60,
+    borderColor: 'rgba(255, 255, 0, 0.8)', // Soft yellow border for visibility
+    borderWidth: 4,
+    borderRadius: 10, // Rounded corners for smoother edges
+    backgroundColor: 'rgba(255, 255, 0, 0.2)', // Transparent yellow for a pop of color
+    shadowColor: '#FFC300', // Matching shadow color for a subtle glow effect
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.9,
+    shadowRadius: 7,
+    elevation: 6, // More elevation for a pronounced depth effect
+  },
+  inputContainer: {
+    marginVertical: 10, // Margin for spacing inputs
+    width: '80%', // Make input width responsive
+    alignItems: 'center', // Centering input fields for clean layout
+  },
+  input: {
+    height: 40,
+    borderColor: '#ecf0f1',
+    borderWidth: 1,
+    borderRadius: 8, // Rounded input fields for a smoother look
+    paddingHorizontal: 10, // Adding padding for comfortable typing
+    color: '#ecf0f1',
+    backgroundColor: '#2C3E50', // Darker background for input with contrast
+    marginVertical: 5, // Spacing between input fields
+    fontSize: 16, // Comfortable text size
+    width: '100%', // Responsive width
+  },
+  label: {
+    color: '#ecf0f1', // Light label color for contrast
+    fontSize: 16, // Slightly larger for readability
+    marginBottom: 5, // Space between label and input
+  },
+  button: {
+    backgroundColor: '#2980b9', // Vibrant blue button for standout
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10, // Rounded corners for modern button style
+    marginTop: 20, // Space between button and content
+    shadowColor: '#000', // Button shadow for depth
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
+    elevation: 5, // Elevation for Android
+  },
+  buttonText: {
+    color: '#fff', // White text for contrast
+    fontSize: 18, // Slightly larger for visibility
+    fontWeight: 'bold',
+    textAlign: 'center', // Centering the button text
   },
 });
+
