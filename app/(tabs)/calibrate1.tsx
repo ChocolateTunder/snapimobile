@@ -23,6 +23,7 @@ export default function Calibrate() {
       const details = await deviceDetails(authToken, qrCode);
       return details.productKey;
     } catch (error) {
+      console.log("Error in fetching product key:", error);
       throw error;
     }
   }
@@ -34,9 +35,14 @@ export default function Calibrate() {
       const path = await getPicture(authToken, qrCode, product);
       updateImagePath(path);
     } catch (error) {
-      console.log("Error in getting device image");
+      console.log("Error in getting device image:", error);
     }
   }
+
+  // Load image on component mount
+  useEffect(() => {
+    getDeviceConfigImage(); // Ensure image is loaded through API on mount
+  }, []);
 
   // Function to load the image and dynamically set the bounding box size
   function loadImage() {
@@ -49,7 +55,6 @@ export default function Calibrate() {
       url,
       (width, height) => {
         setDimensions({ width, height });  // Set image dimensions
-        // Dynamically set the initial bounding box size based on image dimensions (e.g., 20% of width, 10% of height)
         boxWidth.value = width * 0.2;
         boxHeight.value = height * 0.1;
       },
@@ -169,3 +174,4 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 });
+
