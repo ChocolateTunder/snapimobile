@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TextInput, Image, Button, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, TextInput, Image, Button, SafeAreaView, useWindowDimensions } from "react-native";
 import Svg, { Rect } from 'react-native-svg';
 import { useAppContext } from '../context';
 import { deviceDetails, getPicture, uploadCutoutPic } from "@/API/api";
-import Animated, { useAnimatedStyle, useSharedValue, withClamp, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useDerivedValue, useSharedValue, withClamp, withSpring, clamp } from "react-native-reanimated";
 import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler, PinchGestureHandler, RotationGestureHandler } from "react-native-gesture-handler";
 
 export default function Calibrate() {
@@ -16,8 +16,11 @@ export default function Calibrate() {
   const [tempImgPath, updateTempImgPath] = useState('');
   const [imgUrl, setImgUrl] = useState('');
   const [imgLoaded, onImgLoad] = useState(false);
+  const [imgViewDimensions, setImgViewDimensions] = useState({width: 0, height: 0, x:0, y:0});
+  const [imgDimensions, setImgDimensions] = useState({width: 0, height: 0});
+  const [boxSize, setBoxSize] = useState({width: 0, height: 0}); 
   const { authToken, qrCode } = useAppContext();
-  const [imgDimensions, setDimensions] = useState({width: 0, height: 0}); 
+  const {height, width} = useWindowDimensions();
 
   async function getProductKey() {
     try {
@@ -31,7 +34,7 @@ export default function Calibrate() {
   async function getDeviceConfigImage() {
     try {
       const product = await getProductKey();
-      console.log("Product key: ", product);
+      //console.log("Product key: ", product);
       const path = await getPicture(authToken, qrCode, product);
       updateImagePath(path);
     } catch (error) {
@@ -44,16 +47,16 @@ export default function Calibrate() {
     const url = "http://20.53.98.203" + imgPath;
     setImgUrl(url);
     
-    // Image.getSize(url, (width, height) => {
-    //   setDimensions({ width, height });
-    // }, (error) => {
-    //   console.error('Error fetching image dimensions:', error);
-    // });
+    Image.getSize(url, (width, height) => {
+      setImgDimensions({ width: width, height: height });
+    }, (error) => {
+      console.error('Error fetching image dimensions:', error);
+    });
 
     // translateX.value = imgDimensions.width / 2;
     // translateY.value = imgDimensions.height / 2;
-    console.log("IMAGE URL: ", url);
-
+    
+    //console.log("IMAGE URL: ", url);
   }
 
   function convertToBase64(url: string) {
@@ -94,39 +97,36 @@ export default function Calibrate() {
   const translateY = useSharedValue(0);
   const prevX = useSharedValue(0);
   const prevY = useSharedValue(0);
-  const scale = useSharedValue(1);
-  const newScale = useSharedValue(0);
+  const size = useSharedValue(1);
+  const newSize = useSharedValue(0);
   const currentangle = useSharedValue(0);
   const newAngle = useSharedValue(0);
 
+  // useDerivedValue(() => {
+  //   console.log(`X: ${translateX.value}, Y: ${translateY.value}`);
+  // }, [translateX, translateY]);
+  
   const pan = Gesture.Pan().minDistance(1)
     .onStart(() => {
       prevX.value = translateX.value;
       prevY.value = translateY.value;
     })
     .onUpdate((event) => {
-      translateX.value = prevX.value + event.translationX;
-      translateY.value = prevY.value + event.translationY;
-      // const boundX = Math.min(
-      //   Math.max(prevX.value + event.translationX, 0),
-      //   imgDimensions.width - prevX.value * scale.value
-      // );
-
-      // const boundY = Math.min(
-      //   Math.max(prevY.value + event.translationY, 0),
-      //   imgDimensions.height - prevY.value * scale.value
-      // );
-
-      // translateX.value = boundX;
-      // translateY.value = boundY;
+      // translateX.value = prevX.value + event.translationX;
+      // translateY.value = prevY.value + event.translationY;
+      const xValue = prevX.value + event.translationX;
+      const yValue = prevY.value + event.translationY;
+      
+      translateX.value = clamp(xValue, 0, imgViewDimensions.width - boxSize.width)
+      translateY.value = clamp(yValue, imgViewDimensions.y,  imgViewDimensions.height + imgViewDimensions.y - boxSize.height);//imgViewDimensions.height + imgViewDimensions.y);
   }).runOnJS(true);
 
   const pinch = Gesture.Pinch()
     .onStart(() => {
-      newScale.value = scale.value;
+      newSize.value = size.value;
     })
     .onUpdate((event) => {
-      scale.value = newScale.value * event.scale;
+      size.value = newSize.value * event.scale;
   }).runOnJS(true);
 
   const rotation = Gesture.Rotation()
@@ -141,16 +141,38 @@ export default function Calibrate() {
       { translateX: translateX.value },
       { translateY: translateY.value },
       { rotate: `${currentangle.value}rad` },
-      { scale: scale.value }
+      { scale: size.value }
     ],
   }));
 
   const composed = Gesture.Simultaneous(pan, pinch, rotation);
 
+  const getViewInfo = (event: { nativeEvent: { layout: { width: any; height: any; x: any; y: any; }; }; }) => {
+    const { width, height, x, y } = event.nativeEvent.layout;
+    const boxWidth = width * 0.3;
+    const boxHeight = height * 0.3;
+
+    setImgViewDimensions({ width: width, height: height, x: x, y: y });
+    setBoxSize({width: boxWidth, height:boxHeight})
+  };
+
+  // const getViewInfo = (event) => {
+  //   event.target.measure( (x, y, width, height, pageX, pageY) => {
+  //     setImgViewDimensions({ width: width, height: height, x: pageX, y: pageY });
+  //   });
+  // };
+
+
+  const printInfo = () => {
+    console.clear()
+    console.log("Image viewbox: ", imgViewDimensions)
+    console.log("Image: ", imgDimensions)
+    console.log("Bounding box: ", boxSize)
+    console.log("X: ", translateX.value, "Y: ", translateY.value)
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-    
         {imgLoaded ? (
           <>
               <GestureHandlerRootView style={styles.gestureHandler}>
@@ -159,11 +181,15 @@ export default function Calibrate() {
                   <Animated.View style={styles.box} />
                 </Animated.View> */}
                 <View style={styles.container}>
+                  {/* <Text>Height: {height}  ImgY: {imgDimensions.y}, ImgHeight: {imgDimensions.height}</Text> */}
+                  {/* <Text>X: {translateX.value}  Y: {translateY.value}</Text> */}
                   <Image
                   source={{ uri: imgUrl }}
                   style={styles.image}
+                  onLayout={getViewInfo}
                   />
-                  <Animated.View style={[animatedStyles, styles.box]}/>
+                  {/* This is the actual bounding box which the user can resize */}
+                  <Animated.View style={[animatedStyles, {width: boxSize.width, height: boxSize.height, borderColor:'yellow', borderWidth: 2, zIndex: 1, position: "absolute", top: boxSize.height} ]}/>
                 </View>
               </GestureDetector>
               </GestureHandlerRootView>
@@ -180,7 +206,8 @@ export default function Calibrate() {
           <Text>Number of decimal places: </Text>
           <TextInput keyboardType="numeric" value={decimals} onChangeText={newDecimal => onChangeDecimals(newDecimal)} />
           <Text>Recognition result: {result}</Text>
-          <Button title="Identify" onPress={identify} />
+          {/* Change onPress back to identify */}
+          <Button title="Identify" onPress={printInfo} />
         </View>
       ) : (
         <Button title="Load Config" onPress={loadImage} />
@@ -193,8 +220,7 @@ export default function Calibrate() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center'
+    alignItems: 'flex-start'
   },
   placeholder: {
     fontSize: 18,
@@ -204,20 +230,13 @@ const styles = StyleSheet.create({
   image: {
     flex: 1,
     resizeMode: 'contain',
-    marginBottom: 20,
     width: '100%',
-    height: '100%',
-    zIndex: -1
+    // height: '10%',
+    zIndex: -1,
+    top: 0
   },
   gestureHandler: {
     flex: 1,
     width: '100%'
-  },
-  box: {
-    width: 100,
-    height: 50,
-    borderColor: 'yellow',
-    borderWidth: 3,
-    zIndex: 1,
   },
 });
