@@ -118,7 +118,7 @@ export default function Calibrate() {
       const yValue = prevY.value + event.translationY;
       
       translateX.value = clamp(xValue, 0, imgViewDimensions.width - boxSize.width)
-      translateY.value = clamp(yValue, imgViewDimensions.y,  imgViewDimensions.height + imgViewDimensions.y - boxSize.height);//imgViewDimensions.height + imgViewDimensions.y);
+      translateY.value = clamp(yValue, -boxSize.height, imgViewDimensions.height - boxSize.height*2)
   }).runOnJS(true);
 
   const pinch = Gesture.Pinch()
@@ -190,6 +190,7 @@ export default function Calibrate() {
                   />
                   {/* This is the actual bounding box which the user can resize */}
                   <Animated.View style={[animatedStyles, {width: boxSize.width, height: boxSize.height, borderColor:'yellow', borderWidth: 2, zIndex: 1, position: "absolute", top: boxSize.height} ]}/>
+                  {/* <Animated.View style={[animatedStyles, {width: 100, height: 50, borderWidth: 1, borderColor: 'red', zIndex:1, position: 'absolute', top: 0}]}/> */}
                 </View>
               </GestureDetector>
               </GestureHandlerRootView>
@@ -229,11 +230,13 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
-    resizeMode: 'contain',
+    resizeMode: 'stretch',
     width: '100%',
     // height: '10%',
     zIndex: -1,
-    top: 0
+    top: 0,
+    borderColor: 'purple',
+    borderWidth: 1
   },
   gestureHandler: {
     flex: 1,
