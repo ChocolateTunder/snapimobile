@@ -21,7 +21,6 @@ export default function calibrate() {
       </View>
     );
   }
-
   
   const styles = StyleSheet.create({
     input: {

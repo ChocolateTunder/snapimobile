@@ -19,6 +19,17 @@ export default function Calibrate() {
   const [imgViewDimensions, setImgViewDimensions] = useState({width: 0, height: 0, x:0, y:0});
   const [imgDimensions, setImgDimensions] = useState({width: 0, height: 0});
   const [boxSize, setBoxSize] = useState({width: 0, height: 0}); 
+
+  //Values for Animation
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const prevX = useSharedValue(0);
+  const prevY = useSharedValue(0);
+  const size = useSharedValue(1);
+  const newSize = useSharedValue(0);
+  const currentangle = useSharedValue(0);
+  const newAngle = useSharedValue(0);
+
   const { authToken, qrCode } = useAppContext();
   const {height, width} = useWindowDimensions();
 
@@ -52,9 +63,6 @@ export default function Calibrate() {
     }, (error) => {
       console.error('Error fetching image dimensions:', error);
     });
-
-    // translateX.value = imgDimensions.width / 2;
-    // translateY.value = imgDimensions.height / 2;
     
     //console.log("IMAGE URL: ", url);
   }
@@ -92,19 +100,6 @@ export default function Calibrate() {
   useEffect(() => {
     getDeviceConfigImage();
   });
-
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const prevX = useSharedValue(0);
-  const prevY = useSharedValue(0);
-  const size = useSharedValue(1);
-  const newSize = useSharedValue(0);
-  const currentangle = useSharedValue(0);
-  const newAngle = useSharedValue(0);
-
-  // useDerivedValue(() => {
-  //   console.log(`X: ${translateX.value}, Y: ${translateY.value}`);
-  // }, [translateX, translateY]);
   
   const pan = Gesture.Pan().minDistance(1)
     .onStart(() => {
@@ -112,8 +107,6 @@ export default function Calibrate() {
       prevY.value = translateY.value;
     })
     .onUpdate((event) => {
-      // translateX.value = prevX.value + event.translationX;
-      // translateY.value = prevY.value + event.translationY;
       const xValue = prevX.value + event.translationX;
       const yValue = prevY.value + event.translationY;
       
@@ -156,19 +149,8 @@ export default function Calibrate() {
     setBoxSize({width: boxWidth, height:boxHeight})
   };
 
-  // const getViewInfo = (event) => {
-  //   event.target.measure( (x, y, width, height, pageX, pageY) => {
-  //     setImgViewDimensions({ width: width, height: height, x: pageX, y: pageY });
-  //   });
-  // };
-
-
   const printInfo = () => {
     console.clear()
-    console.log("Image viewbox: ", imgViewDimensions)
-    console.log("Image: ", imgDimensions)
-    console.log("Bounding box: ", boxSize)
-    console.log("X: ", translateX.value, "Y: ", translateY.value)
   };
 
   return (
@@ -177,12 +159,7 @@ export default function Calibrate() {
           <>
               <GestureHandlerRootView style={styles.gestureHandler}>
               <GestureDetector gesture={composed}>
-                {/* <Animated.View style={[styles.boxWrapper, animatedStyles]}>
-                  <Animated.View style={styles.box} />
-                </Animated.View> */}
                 <View style={styles.container}>
-                  {/* <Text>Height: {height}  ImgY: {imgDimensions.y}, ImgHeight: {imgDimensions.height}</Text> */}
-                  {/* <Text>X: {translateX.value}  Y: {translateY.value}</Text> */}
                   <Image
                   source={{ uri: imgUrl }}
                   style={styles.image}
@@ -190,7 +167,6 @@ export default function Calibrate() {
                   />
                   {/* This is the actual bounding box which the user can resize */}
                   <Animated.View style={[animatedStyles, {width: boxSize.width, height: boxSize.height, borderColor:'yellow', borderWidth: 2, zIndex: 1, position: "absolute", top: boxSize.height} ]}/>
-                  {/* <Animated.View style={[animatedStyles, {width: 100, height: 50, borderWidth: 1, borderColor: 'red', zIndex:1, position: 'absolute', top: 0}]}/> */}
                 </View>
               </GestureDetector>
               </GestureHandlerRootView>
@@ -235,8 +211,6 @@ const styles = StyleSheet.create({
     // height: '10%',
     zIndex: -1,
     top: 0,
-    borderColor: 'purple',
-    borderWidth: 1
   },
   gestureHandler: {
     flex: 1,
