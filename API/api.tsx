@@ -55,7 +55,7 @@ export function refresh(token:string){
 
 export async function deviceDetails(token:string, device:number){
     const URL = API_URL + '/manage/v2/device/deviceName';
-
+    // console.log("Device name: ", device, " Token: ", token)
     try {
         const response = await axios.get(URL, {params:
             {deviceName: device,

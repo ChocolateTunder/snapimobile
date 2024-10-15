@@ -11,10 +11,11 @@ export default function calibrate() {
     const [torch, setTorch] = useState(false);
     const [flash, setFlash] = useState(false);
     const [permission, requestPermission] = useCameraPermissions();
-    // const [hasPermission, setHasPermission] = useState(null);
+    const [hasPermission, setHasPermission] = useState(null);
+    const [cameraRef, setCameraRef] = useState(null);
     const [imageUri, setImageUri] = useState(null);
     const { authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode, utilityPic, setUtilityPic, devicePic, setDevicePic } = useAppContext();
-    const cameraRef = useRef(null)
+    // const cameraRef = useRef(null)
 
 
     function toggleTorch(){
@@ -31,32 +32,26 @@ export default function calibrate() {
 
     const takePicture = async () => {
       if (cameraRef) {
-        const photo = await cameraRef.current.takePictureAsync();
-        setUtilityPic(photo.uri);
+        const photo = await cameraRef.takePictureAsync({base64: true});
+        // console.log("Photo deets: ", photo);
+        setUtilityPic(photo.base64);
         setImageUri(photo.uri);
-        console.log(cameraRef);
       }
     };
   
     const deletePicture = async () => {
-      if (utilityPic) {
-        await FileSystem.deleteAsync(utilityPic);
-        setUtilityPic(null); // Clear the image URI
+      if (imageUri) {
+        await FileSystem.deleteAsync(imageUri);
+        setUtilityPic(null);
+        setImageUri(null);
       }
     };
 
-    // useEffect(() => {
-    //   (async () => {
-    //     const { status } = await Camera.requestCameraPermissionsAsync();
-    //     setHasPermission(status === 'granted');
-    //   })();
-    // }, []);
-
     return (
         <View style={styles.container}>
-          {!utilityPic ? (
+          {!imageUri ? (
             <>
-            <CameraView style={styles.camera} facing={facing} enableTorch={torch} ref = {cameraRef}>
+            <CameraView style={styles.camera} facing={facing} enableTorch={torch} ref={(ref) => setCameraRef(ref)}>
               <View style={styles.buttonContainer}>
                 <Pressable style={styles.button} onPress={toggleTorch}>
                   {torch ? <MaterialIcons name="flashlight-on" size={36} color="black" /> : <MaterialIcons name="flashlight-off" size={36} color="black" />}
@@ -77,8 +72,8 @@ export default function calibrate() {
             </>
           ) : (
             <View>
-              <Image source={{ uri: utilityPic }} />
-              <Button title="Delete Picture" onPress={deletePicture} />
+              <Image source={{ uri: imageUri }} style={{ width: 400, height: 300, resizeMode: "contain", alignSelf: 'center' }} />
+              <Button title="Retake Picture" onPress={deletePicture} />
             </View>
           )}
         </View>

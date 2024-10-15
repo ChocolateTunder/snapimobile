@@ -10,7 +10,6 @@ export default function Calibrate() {
   const [decimals, onChangeDecimals] = useState('');
   const [digits, onChangeDigits] = useState('');
   const [meterID, onChangeMeterID] = useState(1800);
-  const [angle, onAngleChange] = useState('');
   const [result, onResultChange] = useState(0);
   const [imgPath, updateImagePath] = useState('');
   const [tempImgPath, updateTempImgPath] = useState('');
@@ -63,44 +62,10 @@ export default function Calibrate() {
     }, (error) => {
       console.error('Error fetching image dimensions:', error);
     });
-    
+
     //console.log("IMAGE URL: ", url);
   }
 
-  function convertToBase64(url: string) {
-    fetch(url)
-      .then(response => response.blob())
-      .then(blob => {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(blob);
-        return new Promise((resolve) => {
-          fileReader.onloadend = () => {
-            resolve(fileReader.result?.toString());
-          };
-        });
-      });
-    return 'Calibration Error';
-  }
-
-  async function createCutout(imagePath: string, token: string) {
-    try {
-      const img64: string = convertToBase64(imagePath);
-      const path = await uploadCutoutPic(img64, token);
-      updateTempImgPath(path);
-      console.log("Temp img path: ", tempImgPath);
-    } catch (error) {
-      console.log("Error in creating cutout");
-    }
-  }
-
-  function identify() {
-    createCutout(imgPath, authToken);
-  }
-
-  useEffect(() => {
-    getDeviceConfigImage();
-  });
-  
   const pan = Gesture.Pan().minDistance(1)
     .onStart(() => {
       prevX.value = translateX.value;
@@ -133,7 +98,7 @@ export default function Calibrate() {
     transform: [
       { translateX: translateX.value },
       { translateY: translateY.value },
-      { rotate: `${currentangle.value}rad` },
+      { rotate: `${currentangle.value}deg` },
       { scale: size.value }
     ],
   }));
@@ -143,7 +108,7 @@ export default function Calibrate() {
   const getViewInfo = (event: { nativeEvent: { layout: { width: any; height: any; x: any; y: any; }; }; }) => {
     const { width, height, x, y } = event.nativeEvent.layout;
     const boxWidth = width * 0.3;
-    const boxHeight = height * 0.3;
+    const boxHeight = height * 0.1;
 
     setImgViewDimensions({ width: width, height: height, x: x, y: y });
     setBoxSize({width: boxWidth, height:boxHeight})
@@ -151,7 +116,121 @@ export default function Calibrate() {
 
   const printInfo = () => {
     console.clear()
+    console.log("X: ", translateX.value, " Y: ", translateY.value+boxSize.height);
+    console.log("Width: ", boxSize.width, " Height: ", boxSize.height)
+    console.log("Image Width: ", imgDimensions.width, " Image height: ", imgDimensions.height);
+    console.log("Angle: ", (currentangle.value%360 + 360)%360);
   };
+
+  function convertToBase64(url: string) {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(blob);
+        return new Promise((resolve) => {
+          fileReader.onloadend = () => {
+            resolve(fileReader.result?.toString());
+          };
+        });
+      });
+    return 'Calibration Error';
+  }
+
+  async function createCutout(imagePath: string, token: string) {
+    try {
+      const img64: string = convertToBase64(imagePath);
+      const path = await uploadCutoutPic(img64, token);
+      updateTempImgPath(path);
+      console.log("Temp img path: ", tempImgPath);
+    } catch (error) {
+      console.log("Error in creating cutout");
+    }
+  }
+
+  // function identify_old() {
+  //   // const rad = currentangle.value * (Math.PI / 180);
+  //   const rad = 30 * (Math.PI / 180);
+  //   translateX.value = 25.11;
+  //   translateY.value = 7.15;
+  //   const centerX = 25.11 + 133.99 / 2;
+  //   const centerY = 7.15 + 33.99 / 2;
+
+  //   setBoxSize({width: 133.99, height: 33.99})
+  //   const x1 = translateX.value;
+  //   const y1 = translateY.value;
+  //   const x2 = translateX.value + (boxSize.width * Math.cos(rad));
+  //   const y2 = translateY.value + (boxSize.width * Math.sin(rad));
+  //   const x3 = translateX.value + (boxSize.width * Math.cos(rad)) - (boxSize.height * Math.sin(rad));
+  //   const y3 = translateY.value + (boxSize.width * Math.sin(rad)) + (boxSize.height * Math.cos(rad));
+  //   const x4 = translateX.value - (boxSize.height * Math.sin(rad));
+  //   const y4 = translateY.value + (boxSize.height * Math.cos(rad));
+
+    
+  //   let coordinates = [{x: x1, y: y1}, {x: x2, y: y2}, {x: x3, y: y3}, {x: x4, y: y4}]
+  //   // let topLeft;
+  //   // const angle = (currentangle.value%360 + 360)%360; //Helps deal with negative values, and the offchange that the input isn't normalised in degrees for some reason
+  //   // if (angle >= 180 && angle < 360) {
+  //   //   topLeft = coordinates[2];
+  //   // } else {
+  //   //   topLeft = coordinates[0];
+  //   // }
+
+  //   coordinates.sort((a, b) => {
+  //     if (a.y === b.y) {
+  //       return a.x - b.x; // Sort by x if y is the same
+  //     }
+  //     return a.y - b.y; // Sort by y first
+  //   });
+
+  //   const topLeft = coordinates[0];
+
+  //   coordinates = coordinates.sort((a, b) => {
+  //     if (a === topLeft) return -1;
+  //     if (b === topLeft) return 1;
+  //     return 0;
+  //   });
+
+  //   console.log("Coordinates: ", coordinates);
+  // }
+
+  function identify() {
+    const rad = currentangle.value * (Math.PI / 180);
+    // const rad = 30 * (Math.PI / 180);
+    // translateX.value = 25.11;
+    // translateY.value = 7.15;
+    // setBoxSize({width: 134, height: 34})
+    const y0 = translateY.value + boxSize.height;
+    const centerX = translateX.value + boxSize.width / 2;
+    const centerY = translateY.value + boxSize.height / 2;
+
+    
+    const x1 = translateX.value;
+    const y1 = y0;
+    const x2 = translateX.value + (boxSize.width * Math.cos(rad));
+    const y2 = y0 + (boxSize.width * Math.sin(rad));
+    const x3 = translateX.value + (boxSize.width * Math.cos(rad)) - (boxSize.height * Math.sin(rad));
+    const y3 = y0 + (boxSize.width * Math.sin(rad)) + (boxSize.height * Math.cos(rad));
+    const x4 = translateX.value - (boxSize.height * Math.sin(rad));
+    const y4 = y0 + (boxSize.height * Math.cos(rad));
+
+    
+    let coordinates = [{x: x1, y: y1}, {x: x2, y: y2}, {x: x3, y: y3}, {x: x4, y: y4}]
+    // let topLeft;
+    // const angle = (currentangle.value%360 + 360)%360; //Helps deal with negative values, and the offchange that the input isn't normalised in degrees for some reason
+    // if (angle >= 180 && angle < 360) {
+    //   topLeft = coordinates[2];
+    // } else {
+    //   topLeft = coordinates[0];
+    // }
+
+    console.log("Number of Digits: ", digits);
+    console.log("Number of Decimals: ", decimals);
+    console.log("Coordinates: ", coordinates);
+  }
+  useEffect(() => {
+    getDeviceConfigImage();
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -166,7 +245,9 @@ export default function Calibrate() {
                   onLayout={getViewInfo}
                   />
                   {/* This is the actual bounding box which the user can resize */}
-                  <Animated.View style={[animatedStyles, {width: boxSize.width, height: boxSize.height, borderColor:'yellow', borderWidth: 2, zIndex: 1, position: "absolute", top: boxSize.height} ]}/>
+                  <Animated.View style={[animatedStyles, {width: boxSize.width, height: boxSize.height, borderColor:'yellow', borderWidth: 2, zIndex: 1, position: "absolute", top: boxSize.height} ]}>
+                    <View style={styles.triangle}/>
+                  </Animated.View>
                 </View>
               </GestureDetector>
               </GestureHandlerRootView>
@@ -176,15 +257,13 @@ export default function Calibrate() {
         )}
       {imgLoaded ? (
         <View>
-          <Text>Angle: </Text>
-          <TextInput keyboardType="numeric" value={angle} onChangeText={newAngle => onAngleChange(newAngle)} />
           <Text>Number of digits: </Text>
           <TextInput keyboardType="numeric" value={digits} onChangeText={newDigits => onChangeDigits(newDigits)} />
           <Text>Number of decimal places: </Text>
           <TextInput keyboardType="numeric" value={decimals} onChangeText={newDecimal => onChangeDecimals(newDecimal)} />
           <Text>Recognition result: {result}</Text>
           {/* Change onPress back to identify */}
-          <Button title="Identify" onPress={printInfo} />
+          <Button title="Identify" onPress={identify} />
         </View>
       ) : (
         <Button title="Load Config" onPress={loadImage} />
@@ -215,5 +294,31 @@ const styles = StyleSheet.create({
   gestureHandler: {
     flex: 1,
     width: '100%'
+  },
+  topIndicator:{
+    width: 2,
+    height: 6,
+    backgroundColor: "red",
+    position: "absolute",
+    top: -4,
+    left: "50%"
+  },
+  triangle: {
+    position: "absolute",
+    top: -7,
+    left: "50%",
+    marginLeft: -5,
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderTopWidth: 0,
+    borderRightWidth: 5,
+    borderBottomWidth: 5,
+    borderLeftWidth: 5,
+    borderTopColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: 'yellow',
+    borderLeftColor: 'transparent',
   },
 });
