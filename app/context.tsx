@@ -8,15 +8,21 @@ const AppContext = createContext({
     setRefreshToken: (data) => {},
     qrCode: 0,
     setQRCode: (data) => {},
+    utilityPic: "",
+    setUtilityPic: (data) => {},
+    devicePic: "",
+    setDevicePic: (data) => {}
 });
 
 export const ContextProvider = ({ children }) => {
     const [authToken, setAuthToken] = useState("");
     const [refreshToken, setRefreshToken] = useState("");
     const [qrCode, setQRCode] = useState(0);
+    const [utilityPic, setUtilityPic] = useState("");
+    const [devicePic, setDevicePic] = useState("");
 
     return (
-        <AppContext.Provider value={{ authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode }}>
+        <AppContext.Provider value={{ authToken, setAuthToken, refreshToken, setRefreshToken, qrCode, setQRCode, utilityPic, setUtilityPic, devicePic, setDevicePic }}>
             {children}
         </AppContext.Provider>
     );

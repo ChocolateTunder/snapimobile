@@ -125,7 +125,11 @@ export default function Index() {
       }
     }
 
-    getLoginDetails()
+    getLoginDetails();
+
+    // (async () => {
+    //   const { status } = await Camera.requestCameraPermissionsAsync();
+    // })();
   }, []);
   
 

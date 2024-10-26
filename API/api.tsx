@@ -55,13 +55,13 @@ export function refresh(token:string){
 
 export async function deviceDetails(token:string, device:number){
     const URL = API_URL + '/manage/v2/device/deviceName';
-
+    // console.log("Device name: ", device, " Token: ", token)
     try {
         const response = await axios.get(URL, {params:
             {deviceName: device,
             access_token: token}
         })
-        console.log("API - Device details accessed", response.data)
+        //console.log("API - Device details accessed", response.data)
         return response.data.data;
     } catch(error) {
         console.error("Error in getting device details: ", error);
@@ -81,7 +81,7 @@ export async function getPicture(token:string, device:number, product:string){
             productKey: product,
             access_token: token}
         })
-        console.log("API - Picture info gotten");
+        //console.log("API - Picture info gotten");
         return response.data.data.list[0].path;
     } catch(error){
         console.error("Error in getting device picture: ", error);
