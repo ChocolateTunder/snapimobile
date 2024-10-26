@@ -2,16 +2,19 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Image, Button, SafeAreaView, useWindowDimensions } from "react-native";
 import Svg, { Rect } from 'react-native-svg';
 import { useAppContext } from '../context';
-import { deviceDetails, getPicture, uploadCutoutPic } from "@/API/api";
+import { deviceDetails, getPicture, uploadCutoutPic, config, initialConfig} from "@/API/api";
 import Animated, { useAnimatedStyle, useDerivedValue, useSharedValue, withClamp, withSpring, clamp } from "react-native-reanimated";
 import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler, PinchGestureHandler, RotationGestureHandler } from "react-native-gesture-handler";
 
+const SNAPI_SERVER ='http://20.53.98.203';
+
 export default function Calibrate() {
-  const [decimals, onChangeDecimals] = useState('');
-  const [digits, onChangeDigits] = useState('');
-  const [meterID, onChangeMeterID] = useState(1800);
+  const [decimals, onChangeDecimals] = useState(0);
+  const [digits, onChangeDigits] = useState(0);
   const [result, onResultChange] = useState(0);
   const [imgPath, updateImagePath] = useState('');
+  const [imgId, updateImageId] = useState(0);
+  const [meterId, updateMeterId] = useState(0);
   const [tempImgPath, updateTempImgPath] = useState('');
   const [imgUrl, setImgUrl] = useState('');
   const [imgLoaded, onImgLoad] = useState(false);
@@ -29,7 +32,7 @@ export default function Calibrate() {
   const currentangle = useSharedValue(0);
   const newAngle = useSharedValue(0);
 
-  const { authToken, qrCode } = useAppContext();
+  const { authToken, qrCode, refreshToken } = useAppContext();
   const {height, width} = useWindowDimensions();
 
   async function getProductKey() {
@@ -45,8 +48,10 @@ export default function Calibrate() {
     try {
       const product = await getProductKey();
       //console.log("Product key: ", product);
-      const path = await getPicture(authToken, qrCode, product);
-      updateImagePath(path);
+      const img = await getPicture(authToken, qrCode, product);
+      updateImagePath(img.path);
+      updateImageId(img.id);
+      updateMeterId(img.meterId);
     } catch (error) {
       console.log("Error in getting device image");
     }
@@ -54,7 +59,7 @@ export default function Calibrate() {
 
   function loadImage() {
     onImgLoad(true);
-    const url = "http://20.53.98.203" + imgPath;
+    const url = SNAPI_SERVER + imgPath;
     setImgUrl(url);
     
     Image.getSize(url, (width, height) => {
@@ -62,7 +67,6 @@ export default function Calibrate() {
     }, (error) => {
       console.error('Error fetching image dimensions:', error);
     });
-
     //console.log("IMAGE URL: ", url);
   }
 
@@ -114,13 +118,13 @@ export default function Calibrate() {
     setBoxSize({width: boxWidth, height:boxHeight})
   };
 
-  const printInfo = () => {
-    console.clear()
-    console.log("X: ", translateX.value, " Y: ", translateY.value+boxSize.height);
-    console.log("Width: ", boxSize.width, " Height: ", boxSize.height)
-    console.log("Image Width: ", imgDimensions.width, " Image height: ", imgDimensions.height);
-    console.log("Angle: ", (currentangle.value%360 + 360)%360);
-  };
+  // const printInfo = () => {
+  //   console.clear()
+  //   console.log("X: ", translateX.value, " Y: ", translateY.value+boxSize.height);
+  //   console.log("Width: ", boxSize.width, " Height: ", boxSize.height)
+  //   console.log("Image Width: ", imgDimensions.width, " Image height: ", imgDimensions.height);
+  //   console.log("Angle: ", (currentangle.value%360 + 360)%360);
+  // };
 
   function convertToBase64(url: string) {
     fetch(url)
@@ -137,17 +141,29 @@ export default function Calibrate() {
     return 'Calibration Error';
   }
 
+  // async function createCutout(imagePath: string, token: string) {
+  //   try {
+  //     const url = SNAPI_SERVER + imagePath;
+  //     const img64: string = convertToBase64(url);
+  //     const path = await uploadCutoutPic(img64, token);
+  //     updateTempImgPath(path);
+  //   } catch (error) {
+  //     console.log("Error in creating cutout");
+  //   }
+  // }
+
   async function createCutout(imagePath: string, token: string) {
-    try {
-      const img64: string = convertToBase64(imagePath);
-      const path = await uploadCutoutPic(img64, token);
-      updateTempImgPath(path);
-      console.log("Temp img path: ", tempImgPath);
-    } catch (error) {
-      console.log("Error in creating cutout");
-    }
+    const url = SNAPI_SERVER + imagePath;
+    const img64: string = convertToBase64(url);
+    uploadCutoutPic(img64, token).then((response) => {updateTempImgPath(response)});
   }
 
+  async function firstConfig(centerX: number, centerY: number, coords: number[]){
+    const imagePath = SNAPI_SERVER + imgPath;
+    const data = await config(imagePath, authToken, qrCode.toString(), meterId, currentangle.value, centerX, centerY, boxSize.width, boxSize.height, coords, digits, decimals, 21, parseInt(refreshToken));
+    // console.log(data);
+    return data;
+  }
   // function identify_old() {
   //   // const rad = currentangle.value * (Math.PI / 180);
   //   const rad = 30 * (Math.PI / 180);
@@ -194,7 +210,12 @@ export default function Calibrate() {
   //   console.log("Coordinates: ", coordinates);
   // }
 
-  function identify() {
+  async function uploadCutout(image: string) {
+    const temp = uploadCutoutPic(image, authToken);
+    console.log(temp)
+  }
+
+  async function identify() {
     const rad = currentangle.value * (Math.PI / 180);
     // const rad = 30 * (Math.PI / 180);
     // translateX.value = 25.11;
@@ -216,6 +237,21 @@ export default function Calibrate() {
 
     
     let coordinates = [{x: x1, y: y1}, {x: x2, y: y2}, {x: x3, y: y3}, {x: x4, y: y4}]
+    const coords = [x1, y1, x2, y2, x3, y3, x4, y4];
+    const imagePath = SNAPI_SERVER + imgPath;
+
+    try {
+      const path = await firstConfig(centerX, centerY, coords);
+
+      // await uploadCutout(path.local_image_cut_base64_decode);
+      await uploadCutout(path.small_image_cut_base64_decode);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+    
+    // await uploadCutout(path)
+    
+    
     // let topLeft;
     // const angle = (currentangle.value%360 + 360)%360; //Helps deal with negative values, and the offchange that the input isn't normalised in degrees for some reason
     // if (angle >= 180 && angle < 360) {
@@ -224,9 +260,11 @@ export default function Calibrate() {
     //   topLeft = coordinates[0];
     // }
 
-    console.log("Number of Digits: ", digits);
-    console.log("Number of Decimals: ", decimals);
-    console.log("Coordinates: ", coordinates);
+    // console.log("Number of Digits: ", digits);
+    // console.log("Number of Decimals: ", decimals);
+    // console.log("Coordinates: ", coordinates);
+
+
   }
   useEffect(() => {
     getDeviceConfigImage();
@@ -258,9 +296,9 @@ export default function Calibrate() {
       {imgLoaded ? (
         <View>
           <Text>Number of digits: </Text>
-          <TextInput keyboardType="numeric" value={digits} onChangeText={newDigits => onChangeDigits(newDigits)} />
+          <TextInput keyboardType="numeric" value={digits.toString()} onChangeText={newDigits => onChangeDigits(parseInt(newDigits))} />
           <Text>Number of decimal places: </Text>
-          <TextInput keyboardType="numeric" value={decimals} onChangeText={newDecimal => onChangeDecimals(newDecimal)} />
+          <TextInput keyboardType="numeric" value={decimals.toString()} onChangeText={newDecimal => onChangeDecimals(parseInt(newDecimal))} />
           <Text>Recognition result: {result}</Text>
           {/* Change onPress back to identify */}
           <Button title="Identify" onPress={identify} />
