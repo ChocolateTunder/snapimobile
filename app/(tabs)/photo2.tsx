@@ -1,3 +1,4 @@
+//This is basically a clone of the (tabs)/index so that the user can go back and see/retake photos 
 import { Camera, CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { useNavigation } from "expo-router";
 import { Button, Platform, Pressable, StyleSheet, Text, View, Image } from 'react-native';

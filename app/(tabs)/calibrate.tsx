@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Image, Button, SafeAreaView, useWindowDimensions } from "react-native";
-import Svg, { Rect } from 'react-native-svg';
 import { useAppContext } from '../context';
 import { deviceDetails, getPicture, uploadCutoutPic, config, initialConfig} from "@/API/api";
 import Animated, { useAnimatedStyle, useDerivedValue, useSharedValue, withClamp, withSpring, clamp } from "react-native-reanimated";
@@ -35,6 +34,7 @@ export default function Calibrate() {
   const { authToken, qrCode, refreshToken } = useAppContext();
   const {height, width} = useWindowDimensions();
 
+  //Get devuce details
   async function getProductKey() {
     try {
       const details = await deviceDetails(authToken, qrCode);
@@ -44,6 +44,7 @@ export default function Calibrate() {
     }
   }
 
+  //Get device details
   async function getDeviceConfigImage() {
     try {
       const product = await getProductKey();
@@ -57,6 +58,7 @@ export default function Calibrate() {
     }
   }
 
+  //Download most recent image and display it for cropping
   function loadImage() {
     onImgLoad(true);
     const url = SNAPI_SERVER + imgPath;
@@ -70,6 +72,7 @@ export default function Calibrate() {
     //console.log("IMAGE URL: ", url);
   }
 
+  //Gesture hander stuff begins
   const pan = Gesture.Pan().minDistance(1)
     .onStart(() => {
       prevX.value = translateX.value;
@@ -98,6 +101,10 @@ export default function Calibrate() {
       currentangle.value = newAngle.value + event.rotation;
   });
 
+  const composed = Gesture.Simultaneous(pan, pinch, rotation);
+  //Gesture handler stuff ends
+
+  //Manipulate the Animated.View
   const animatedStyles = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
@@ -107,8 +114,8 @@ export default function Calibrate() {
     ],
   }));
 
-  const composed = Gesture.Simultaneous(pan, pinch, rotation);
-
+  
+  //Get box details based on Animated.View coordinates
   const getViewInfo = (event: { nativeEvent: { layout: { width: any; height: any; x: any; y: any; }; }; }) => {
     const { width, height, x, y } = event.nativeEvent.layout;
     const boxWidth = width * 0.3;
@@ -118,6 +125,7 @@ export default function Calibrate() {
     setBoxSize({width: boxWidth, height:boxHeight})
   };
 
+  //For testing
   // const printInfo = () => {
   //   console.clear()
   //   console.log("X: ", translateX.value, " Y: ", translateY.value+boxSize.height);
@@ -126,95 +134,22 @@ export default function Calibrate() {
   //   console.log("Angle: ", (currentangle.value%360 + 360)%360);
   // };
 
-  function convertToBase64(url: string) {
-    fetch(url)
-      .then(response => response.blob())
-      .then(blob => {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(blob);
-        return new Promise((resolve) => {
-          fileReader.onloadend = () => {
-            resolve(fileReader.result?.toString());
-          };
-        });
-      });
-    return 'Calibration Error';
-  }
 
-  // async function createCutout(imagePath: string, token: string) {
-  //   try {
-  //     const url = SNAPI_SERVER + imagePath;
-  //     const img64: string = convertToBase64(url);
-  //     const path = await uploadCutoutPic(img64, token);
-  //     updateTempImgPath(path);
-  //   } catch (error) {
-  //     console.log("Error in creating cutout");
-  //   }
-  // }
-
-  async function createCutout(imagePath: string, token: string) {
-    const url = SNAPI_SERVER + imagePath;
-    const img64: string = convertToBase64(url);
-    uploadCutoutPic(img64, token).then((response) => {updateTempImgPath(response)});
-  }
-
+  //Update cropping details
   async function firstConfig(centerX: number, centerY: number, coords: number[]){
     const imagePath = SNAPI_SERVER + imgPath;
     const data = await config(imagePath, authToken, qrCode.toString(), meterId, currentangle.value, centerX, centerY, boxSize.width, boxSize.height, coords, digits, decimals, 21, parseInt(refreshToken));
     // console.log(data);
     return data;
   }
-  // function identify_old() {
-  //   // const rad = currentangle.value * (Math.PI / 180);
-  //   const rad = 30 * (Math.PI / 180);
-  //   translateX.value = 25.11;
-  //   translateY.value = 7.15;
-  //   const centerX = 25.11 + 133.99 / 2;
-  //   const centerY = 7.15 + 33.99 / 2;
 
-  //   setBoxSize({width: 133.99, height: 33.99})
-  //   const x1 = translateX.value;
-  //   const y1 = translateY.value;
-  //   const x2 = translateX.value + (boxSize.width * Math.cos(rad));
-  //   const y2 = translateY.value + (boxSize.width * Math.sin(rad));
-  //   const x3 = translateX.value + (boxSize.width * Math.cos(rad)) - (boxSize.height * Math.sin(rad));
-  //   const y3 = translateY.value + (boxSize.width * Math.sin(rad)) + (boxSize.height * Math.cos(rad));
-  //   const x4 = translateX.value - (boxSize.height * Math.sin(rad));
-  //   const y4 = translateY.value + (boxSize.height * Math.cos(rad));
-
-    
-  //   let coordinates = [{x: x1, y: y1}, {x: x2, y: y2}, {x: x3, y: y3}, {x: x4, y: y4}]
-  //   // let topLeft;
-  //   // const angle = (currentangle.value%360 + 360)%360; //Helps deal with negative values, and the offchange that the input isn't normalised in degrees for some reason
-  //   // if (angle >= 180 && angle < 360) {
-  //   //   topLeft = coordinates[2];
-  //   // } else {
-  //   //   topLeft = coordinates[0];
-  //   // }
-
-  //   coordinates.sort((a, b) => {
-  //     if (a.y === b.y) {
-  //       return a.x - b.x; // Sort by x if y is the same
-  //     }
-  //     return a.y - b.y; // Sort by y first
-  //   });
-
-  //   const topLeft = coordinates[0];
-
-  //   coordinates = coordinates.sort((a, b) => {
-  //     if (a === topLeft) return -1;
-  //     if (b === topLeft) return 1;
-  //     return 0;
-  //   });
-
-  //   console.log("Coordinates: ", coordinates);
-  // }
-
+  //This uses the uploadCutoutImg API function to upload crop box details and image, and gets back a cropped image that's temporarily stored on SNAPI servers
   async function uploadCutout(image: string) {
     const temp = uploadCutoutPic(image, authToken);
     console.log(temp)
   }
 
+  //Begins process of uploadCutout,  deviceConfig, updateOrGenerateData, and deviceSet
   async function identify() {
     const rad = currentangle.value * (Math.PI / 180);
     // const rad = 30 * (Math.PI / 180);
@@ -248,24 +183,9 @@ export default function Calibrate() {
     } catch (error) {
       console.error('Error:', error);
     }
-    
-    // await uploadCutout(path)
-    
-    
-    // let topLeft;
-    // const angle = (currentangle.value%360 + 360)%360; //Helps deal with negative values, and the offchange that the input isn't normalised in degrees for some reason
-    // if (angle >= 180 && angle < 360) {
-    //   topLeft = coordinates[2];
-    // } else {
-    //   topLeft = coordinates[0];
-    // }
-
-    // console.log("Number of Digits: ", digits);
-    // console.log("Number of Decimals: ", decimals);
-    // console.log("Coordinates: ", coordinates);
-
-
   }
+
+  //Get device details
   useEffect(() => {
     getDeviceConfigImage();
   });
@@ -294,13 +214,17 @@ export default function Calibrate() {
           <Text style={styles.placeholder}>Press the button to get the latest image from SNAPI device</Text>
         )}
       {imgLoaded ? (
-        <View>
-          <Text>Number of digits: </Text>
-          <TextInput keyboardType="numeric" value={digits.toString()} onChangeText={newDigits => onChangeDigits(parseInt(newDigits))} />
-          <Text>Number of decimal places: </Text>
-          <TextInput keyboardType="numeric" value={decimals.toString()} onChangeText={newDecimal => onChangeDecimals(parseInt(newDecimal))} />
-          <Text>Recognition result: {result}</Text>
-          {/* Change onPress back to identify */}
+        <View style={styles.metaInput}>
+          <View style={styles.inputHandler}>
+            <Text>Number of digits: </Text>
+            <TextInput style={styles.input} keyboardType="numeric" value={digits.toString()} onChangeText={newDigits => onChangeDigits(parseInt(newDigits))} />
+          </View>
+          <View style={styles.inputHandler}>
+            <Text>Number of decimal places: </Text>
+            <TextInput style={styles.input} keyboardType="numeric" value={decimals.toString()} onChangeText={newDecimal => onChangeDecimals(parseInt(newDecimal))} />
+          </View>
+          
+          <Text style={styles.inputHandler}>Recognition result: {result}</Text>
           <Button title="Identify" onPress={identify} />
         </View>
       ) : (
@@ -312,6 +236,19 @@ export default function Calibrate() {
 }
 
 const styles = StyleSheet.create({
+  metaInput: {
+    flexDirection: 'column',
+    alignSelf: 'center'
+  },
+  input: {
+    backgroundColor: 'white',
+    borderColor: 'black',
+    borderWidth: 1,
+    minWidth: '20%',
+  },
+  inputHandler: {
+    flexDirection: "row",
+  },
   container: {
     flex: 1,
     alignItems: 'flex-start'

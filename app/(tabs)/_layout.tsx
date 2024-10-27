@@ -1,3 +1,4 @@
+//These are the tabs settings for the files in the (tabs) folder
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import { ContextProvider } from '../context';

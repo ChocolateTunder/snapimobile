@@ -1,3 +1,4 @@
+//This is the overall router for the project, if a login page is to be added it can be added as a Stack.Screen here 
 import { Stack } from "expo-router";
 import { ContextProvider } from "./context";
 

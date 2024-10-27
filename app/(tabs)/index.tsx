@@ -1,3 +1,4 @@
+//This is the first page post QR code scan, so where the user is expected to take a picture of the missing 
 import { Camera, CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { useNavigation } from "expo-router";
 import { Button, Platform, Pressable, StyleSheet, Text, View, Image } from 'react-native';
@@ -73,7 +74,7 @@ export default function calibrate() {
           ) : (
             <View>
               <Image source={{ uri: imageUri }} style={{ width: 400, height: 300, resizeMode: "contain", alignSelf: 'center' }} />
-              <Button title="Retake Picture" onPress={deletePicture} />
+              <Button title="Retake Picture" onPress={deletePicture}  />
             </View>
           )}
         </View>
