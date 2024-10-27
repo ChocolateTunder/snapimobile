@@ -1,6 +1,8 @@
+//This is the appwide context, check the app/_layout.tsx to see how it's used. These values can be passed to any pages the context envelops in the router.
 import React, { createContext, useState, useContext } from 'react';
 
-// Define the shape of the context's value
+
+//If more contexts are to be added add the value and setter here, and also in the ContextProvider below
 const AppContext = createContext({
     authToken: "",
     setAuthToken: (data) => {},
